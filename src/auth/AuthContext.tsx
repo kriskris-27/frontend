@@ -14,14 +14,17 @@ interface AuthContextType{
     user:User | null;
     login:(email:string, password:string)=>Promise<void>
     logout:()=>Promise<void>
+    // setAuthToken: (token: string) => void;    
+    refetchUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
 export const AuthProvider = ({children}:{children:React.ReactNode}) =>{
     const [user,setUser] = useState<User|null>(null);
 
-    const fetchUser=async ()=>{
+    const refetchUser=async ()=>{
         try{
             const res=await api.get<MeResponse>('/auth/me');
         setUser(res.data.user);
@@ -31,19 +34,24 @@ export const AuthProvider = ({children}:{children:React.ReactNode}) =>{
     };
 
     useEffect(()=>{
-        fetchUser();
+        refetchUser();
     },[]);
 
     const login = async (email:string,password:string) =>{
         await  api.post('/auth/login',{email,password});
-        await fetchUser();
+        await refetchUser();
     } 
     const logout =async() => {
         await api.post('/auth/logout');
         setUser(null);
     }
+
+//   const setAuthToken = (token: string) => {
+//     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+//   };
+
     return(
-        <AuthContext.Provider value={{user,login,logout}}>
+        <AuthContext.Provider value={{user,login,logout,refetchUser}}>
             {children}
         </AuthContext.Provider>
     )

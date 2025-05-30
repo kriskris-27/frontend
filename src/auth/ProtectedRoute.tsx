@@ -1,12 +1,15 @@
-import type { JSX } from "react";
-import { useAuth } from "./AuthContext";
-import { Navigate } from "react-router-dom";
+// src/components/ProtectedRoute.tsx
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
-interface Props{
-    children:JSX.Element;
-}
-export default function ProtectedRoute({children}:Props){
-    const {user} = useAuth();
-    return user?children:<Navigate to ="/login"/>
+const ProtectedRoute = () => {
+  const { user } = useAuth();
 
-}
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />; 
+};
+
+export default ProtectedRoute;

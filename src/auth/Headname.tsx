@@ -2,9 +2,13 @@
 
 import { motion } from "framer-motion"
 
-export default function Component() {
+interface HeadnameProps {
+    title: string;
+}
+
+export default function Component({ title }: HeadnameProps) {
   return (
-    <div className="flex items-center justify-center  bg-gray-50">
+    <div className="flex items-center justify-center bg-gray-50">
       <motion.h2
         className="text-4xl font-bold text-gray-800"
         initial={{ opacity: 0, y: 20 }}
@@ -15,7 +19,7 @@ export default function Component() {
           color: "#3b82f6",
         }}
       >
-        Login
+        {title}
       </motion.h2>
     </div>
   )
