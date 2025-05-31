@@ -14,6 +14,7 @@ interface AuthContextType{
     user:User | null;
     login:(email:string, password:string)=>Promise<void>
     logout:()=>Promise<void>
+    loading: boolean;
     // setAuthToken: (token: string) => void;    
     refetchUser: () => Promise<void>;
 }
@@ -23,15 +24,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({children}:{children:React.ReactNode}) =>{
     const [user,setUser] = useState<User|null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const refetchUser=async ()=>{
-        try{
-            const res=await api.get<MeResponse>('/auth/me');
-        setUser(res.data.user);
-        }catch{
-            setUser(null)
-        }
-    };
+     const refetchUser = async () => {
+    setLoading(true); 
+    try {
+      const res = await api.get<MeResponse>('/auth/me');
+      setUser(res.data.user);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false); 
+    }
+  };
 
     useEffect(()=>{
         refetchUser();
@@ -51,7 +56,7 @@ export const AuthProvider = ({children}:{children:React.ReactNode}) =>{
 //   };
 
     return(
-        <AuthContext.Provider value={{user,login,logout,refetchUser}}>
+        <AuthContext.Provider value={{user,login,logout,loading,refetchUser}}>
             {children}
         </AuthContext.Provider>
     )
