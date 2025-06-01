@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './auth/ProtectedRoute';
 import Signup from './auth/Signup';
 import OAuthSuccess from './auth/OAuthSuccess';
+import DocumentStructurer from './components/DocumentStructurer';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
   {/* Protected Routes */}
   <Route element={<ProtectedRoute />}>
     <Route path="/dashboard" element={<Dashboard />} />
+    <Route path="/admin/doc-struc" element={<DocumentStructurer />} />
   </Route>
 </Routes>
     </Router>
