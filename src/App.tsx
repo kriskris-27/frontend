@@ -5,6 +5,7 @@ import ProtectedRoute from './auth/ProtectedRoute';
 import Signup from './auth/Signup';
 import OAuthSuccess from './auth/OAuthSuccess';
 import DocumentStructurer from './components/DocumentStructurer';
+import StudentDashboard from './components/StudentDashboard';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
   <Route element={<ProtectedRoute />}>
     <Route path="/dashboard" element={<Dashboard />} />
     <Route path="/admin/doc-struc" element={<DocumentStructurer />} />
+    <Route path="/sdash" element={<StudentDashboard />} />
   </Route>
 </Routes>
     </Router>
