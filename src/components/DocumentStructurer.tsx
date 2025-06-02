@@ -1,13 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../auth/AuthContext';
-import type { Lesson, Module, StructuredDoc, StructuredDocResponse, ErrorResponse, DocListItem, DocListResponse } from '../types/api';
+import type {  Module, StructuredDoc, StructuredDocResponse, ErrorResponse, DocListItem, DocListResponse } from '../types/api';
 
 interface ManualInput {
     moduleTitle: string;
     lessonTitle: string;
     content: string;
     example: string;
+}
+
+interface AIInputState {
+    rawText: string;
+    targetModuleIndex: number | null;
+    isAddingToExisting: boolean;
 }
 
 export default function DocumentStructurer() {
@@ -29,7 +36,14 @@ export default function DocumentStructurer() {
         content: '',
         example: ''
     });
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [selectedModuleIndex, setSelectedModuleIndex] = useState<number | null>(null);
     const { user } = useAuth();
+    const [aiInput, setAiInput] = useState<AIInputState>({
+        rawText: '',
+        targetModuleIndex: null,
+        isAddingToExisting: false
+    });
 
     // Fetch user's documents on component mount
     useEffect(() => {
@@ -53,14 +67,37 @@ export default function DocumentStructurer() {
 
     const handleAISubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!rawText.trim()) return;
+        if (!aiInput.rawText.trim()) return;
 
         setLoading(true);
         setError(null);
         try {
-            const response = await api.post<StructuredDocResponse>('/ai/structure-doc', { rawText });
+            const response = await api.post<StructuredDocResponse>('/ai/structure-doc', { 
+                rawText: aiInput.rawText,
+                targetModuleIndex: aiInput.targetModuleIndex,
+                existingDoc: aiInput.isAddingToExisting ? structuredDoc : null
+            });
+            
             if (response.data.data) {
-                setStructuredDoc(response.data.data);
+                if (aiInput.isAddingToExisting && structuredDoc) {
+                    // Merge new content with existing document
+                    const updatedDoc = JSON.parse(JSON.stringify(structuredDoc));
+                    
+                    if (aiInput.targetModuleIndex !== null) {
+                        // Add to specific module
+                        const targetModule = response.data.data.modules[0];
+                        if (targetModule) {
+                            updatedDoc.modules[aiInput.targetModuleIndex].lessons.push(...targetModule.lessons);
+                        }
+                    } else {
+                        // Add new modules
+                        updatedDoc.modules.push(...response.data.data.modules);
+                    }
+                    setStructuredDoc(updatedDoc);
+                } else {
+                    // Create new document
+                    setStructuredDoc(response.data.data);
+                }
             } else {
                 setError('No data received from server');
             }
@@ -69,12 +106,45 @@ export default function DocumentStructurer() {
             setError(errorResponse?.message || 'Failed to structure document');
         } finally {
             setLoading(false);
+            // Reset AI input state
+            setAiInput({
+                rawText: '',
+                targetModuleIndex: null,
+                isAddingToExisting: false
+            });
         }
+    };
+
+    const handleAddAIToExisting = (moduleIndex?: number) => {
+        if (!structuredDoc) {
+            setError('Please load or create a document first');
+            return;
+        }
+        setAiInput({
+            rawText: '',
+            targetModuleIndex: moduleIndex ?? null,
+            isAddingToExisting: true
+        });
+    };
+
+    const handleAddToExisting = (moduleIndex?: number) => {
+        if (!structuredDoc) {
+            setError('Please load or create a document first');
+            return;
+        }
+        setShowAddForm(true);
+        setSelectedModuleIndex(moduleIndex ?? null);
+        setManualInput({
+            moduleTitle: moduleIndex !== undefined ? structuredDoc.modules[moduleIndex].moduleTitle : '',
+            lessonTitle: '',
+            content: '',
+            example: ''
+        });
     };
 
     const handleManualSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!manualInput.moduleTitle || !manualInput.lessonTitle || !manualInput.content) {
+        if (!manualInput.lessonTitle || !manualInput.content) {
             setError('Please fill in all required fields');
             return;
         }
@@ -93,37 +163,46 @@ export default function DocumentStructurer() {
                 setStructuredDoc({
                     courseTitle: 'New Course',
                     modules: [{
-                        moduleTitle: manualInput.moduleTitle,
+                        moduleTitle: manualInput.moduleTitle || 'New Module',
                         lessons: [newLesson]
                     }]
                 });
             } else {
                 // Add to existing document
                 const updatedDoc = JSON.parse(JSON.stringify(structuredDoc));
-                const existingModuleIndex = updatedDoc.modules.findIndex(
-                    (m: Module) => m.moduleTitle === manualInput.moduleTitle
-                );
-
-                if (existingModuleIndex >= 0) {
-                    updatedDoc.modules[existingModuleIndex].lessons.push(newLesson);
+                
+                if (selectedModuleIndex !== null) {
+                    // Add to specific existing module
+                    updatedDoc.modules[selectedModuleIndex].lessons.push(newLesson);
                 } else {
-                    updatedDoc.modules.push({
-                        moduleTitle: manualInput.moduleTitle,
-                        lessons: [newLesson]
-                    });
+                    // Check if module exists or create new
+                    const existingModuleIndex = updatedDoc.modules.findIndex(
+                        (m: Module) => m.moduleTitle === manualInput.moduleTitle
+                    );
+
+                    if (existingModuleIndex >= 0) {
+                        updatedDoc.modules[existingModuleIndex].lessons.push(newLesson);
+                    } else {
+                        updatedDoc.modules.push({
+                            moduleTitle: manualInput.moduleTitle || 'New Module',
+                            lessons: [newLesson]
+                        });
+                    }
                 }
                 setStructuredDoc(updatedDoc);
             }
 
-            // Reset form
+            // Reset form and state
             setManualInput({
                 moduleTitle: '',
                 lessonTitle: '',
                 content: '',
                 example: ''
             });
+            setShowAddForm(false);
+            setSelectedModuleIndex(null);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to add manual content');
+            setError(err.response?.data?.message || 'Failed to add content');
         } finally {
             setLoading(false);
         }
@@ -168,7 +247,9 @@ export default function DocumentStructurer() {
                 await fetchUserDocs();
                 if (!currentDocId) {
                     // If this was a new document, set the current doc ID
-                    setCurrentDocId(response.data.data._id);
+                    if (response.data.data._id) {
+                        setCurrentDocId(response.data.data._id);
+                    }
                 }
                 setError(null);
             }
@@ -309,28 +390,51 @@ export default function DocumentStructurer() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* AI Section */}
                 <div className="bg-white rounded-lg shadow-lg p-6">
-                    <h2 className="text-2xl font-semibold mb-6 text-blue-600">AI-Powered Structure</h2>
+                    <h2 className="text-2xl font-semibold mb-6 text-blue-600">
+                        {aiInput.isAddingToExisting ? 'Add AI Content to Existing Course' : 'AI-Powered Structure'}
+                    </h2>
                     <form onSubmit={handleAISubmit} className="mb-6">
                         <div className="mb-4">
                             <label htmlFor="rawText" className="block text-sm font-medium mb-2">
-                                Enter Documentation Text
+                                {aiInput.isAddingToExisting 
+                                    ? aiInput.targetModuleIndex !== null && structuredDoc
+                                        ? `Add content to "${structuredDoc.modules[aiInput.targetModuleIndex].moduleTitle}"`
+                                        : 'Add new modules to existing course'
+                                    : 'Enter Documentation Text'}
                             </label>
                             <textarea
                                 id="rawText"
-                                value={rawText}
-                                onChange={(e) => setRawText(e.target.value)}
+                                value={aiInput.rawText}
+                                onChange={(e) => setAiInput(prev => ({ ...prev, rawText: e.target.value }))}
                                 className="w-full h-48 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                placeholder="Paste your documentation here..."
+                                placeholder={aiInput.isAddingToExisting 
+                                    ? "Paste new content to add to the existing course..."
+                                    : "Paste your documentation here..."}
                                 required
                             />
                         </div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {loading ? 'Processing...' : 'Generate Structure'}
-                        </button>
+                        <div className="flex justify-between items-center">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                {loading ? 'Processing...' : aiInput.isAddingToExisting ? 'Add Content' : 'Generate Structure'}
+                            </button>
+                            {aiInput.isAddingToExisting && (
+                                <button
+                                    type="button"
+                                    onClick={() => setAiInput({
+                                        rawText: '',
+                                        targetModuleIndex: null,
+                                        isAddingToExisting: false
+                                    })}
+                                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                                >
+                                    Cancel
+                                </button>
+                            )}
+                        </div>
                     </form>
                 </div>
 
@@ -449,9 +553,25 @@ export default function DocumentStructurer() {
                     <div className="space-y-8">
                         {structuredDoc.modules.map((module, moduleIndex) => (
                             <div key={moduleIndex} className="border-l-4 border-blue-500 pl-4">
-                                <h3 className="text-2xl font-semibold mb-4 text-gray-700">
-                                    {module.moduleTitle}
-                                </h3>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-2xl font-semibold text-gray-700">
+                                        {module.moduleTitle}
+                                    </h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleAddAIToExisting(moduleIndex)}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                        >
+                                            Add AI Content
+                                        </button>
+                                        <button
+                                            onClick={() => handleAddToExisting(moduleIndex)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                        >
+                                            Add Manual Content
+                                        </button>
+                                    </div>
+                                </div>
                                 
                                 <div className="space-y-6">
                                     {module.lessons.map((lesson, lessonIndex) => (
@@ -511,6 +631,120 @@ export default function DocumentStructurer() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+
+                    <div className="mt-4 flex justify-between">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleAddAIToExisting()}
+                                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                Add New AI Module
+                            </button>
+                            <button
+                                onClick={() => handleAddToExisting()}
+                                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            >
+                                Add New Manual Module
+                            </button>
+                        </div>
+                        <button
+                            onClick={handleSaveAll}
+                            disabled={saving}
+                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        >
+                            {saving ? 'Saving...' : 'Save All Changes'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {showAddForm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-2xl font-bold mb-4">
+                            {selectedModuleIndex !== null && structuredDoc
+                                ? `Add Lesson to "${structuredDoc.modules[selectedModuleIndex].moduleTitle}"`
+                                : 'Add New Module/Lesson'}
+                        </h2>
+                        <form onSubmit={handleManualSubmit} className="space-y-4">
+                            {selectedModuleIndex === null && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Module Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={manualInput.moduleTitle}
+                                        onChange={(e) => setManualInput(prev => ({ ...prev, moduleTitle: e.target.value }))}
+                                        className="w-full p-2 border rounded"
+                                        placeholder="Enter module title"
+                                        required={selectedModuleIndex === null}
+                                    />
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Lesson Title
+                                </label>
+                                <input
+                                    type="text"
+                                    value={manualInput.lessonTitle}
+                                    onChange={(e) => setManualInput(prev => ({ ...prev, lessonTitle: e.target.value }))}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Enter lesson title"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Content
+                                </label>
+                                <textarea
+                                    value={manualInput.content}
+                                    onChange={(e) => setManualInput(prev => ({ ...prev, content: e.target.value }))}
+                                    className="w-full p-2 border rounded h-32"
+                                    placeholder="Enter lesson content"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Example (Optional)
+                                </label>
+                                <textarea
+                                    value={manualInput.example}
+                                    onChange={(e) => setManualInput(prev => ({ ...prev, example: e.target.value }))}
+                                    className="w-full p-2 border rounded h-32"
+                                    placeholder="Enter example (optional)"
+                                />
+                            </div>
+                            <div className="flex justify-end space-x-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAddForm(false);
+                                        setSelectedModuleIndex(null);
+                                        setManualInput({
+                                            moduleTitle: '',
+                                            lessonTitle: '',
+                                            content: '',
+                                            example: ''
+                                        });
+                                    }}
+                                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {loading ? 'Adding...' : 'Add Content'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

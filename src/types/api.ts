@@ -32,6 +32,6 @@ export interface DocListItem {
     updatedAt: string;
 }
 
-export interface StructuredDocResponse extends ApiResponse<StructuredDoc> {}
-export interface DocListResponse extends ApiResponse<DocListItem[]> {}
-export interface ErrorResponse extends ApiResponse<null> {} 
+export type StructuredDocResponse = ApiResponse<StructuredDoc>
+export type DocListResponse = ApiResponse<DocListItem[]>
+export type ErrorResponse = ApiResponse<null> 
