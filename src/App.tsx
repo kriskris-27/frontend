@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './auth/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import ProtectedRoute from './auth/ProtectedRoute';
+// import ProtectedRoute from './auth/ProtectedRoute';
 import Signup from './auth/Signup';
 import OAuthSuccess from './auth/OAuthSuccess';
 import DocumentStructurer from './components/DocumentStructurer';
