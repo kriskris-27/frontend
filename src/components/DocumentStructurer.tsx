@@ -18,7 +18,6 @@ interface AIInputState {
 }
 
 export default function DocumentStructurer() {
-    const [rawText, setRawText] = useState('');
     const [structuredDoc, setStructuredDoc] = useState<StructuredDoc | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -294,7 +293,6 @@ export default function DocumentStructurer() {
                 setStructuredDoc(response.data.data);
                 setCurrentDocId(docId);
                 // Reset form states
-                setRawText('');
                 setManualInput({
                     moduleTitle: '',
                     lessonTitle: '',
@@ -313,7 +311,6 @@ export default function DocumentStructurer() {
     const handleNewDocument = () => {
         setStructuredDoc(null);
         setCurrentDocId(null);
-        setRawText('');
         setManualInput({
             moduleTitle: '',
             lessonTitle: '',
