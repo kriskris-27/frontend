@@ -96,7 +96,7 @@ export default function DocumentStructurer() {
                     setStructuredDoc(updatedDoc);
                 } else {
                     // Create new document
-                    setStructuredDoc(response.data.data);
+                setStructuredDoc(response.data.data);
                 }
             } else {
                 setError('No data received from server');
@@ -176,17 +176,17 @@ export default function DocumentStructurer() {
                     updatedDoc.modules[selectedModuleIndex].lessons.push(newLesson);
                 } else {
                     // Check if module exists or create new
-                    const existingModuleIndex = updatedDoc.modules.findIndex(
-                        (m: Module) => m.moduleTitle === manualInput.moduleTitle
-                    );
+                const existingModuleIndex = updatedDoc.modules.findIndex(
+                    (m: Module) => m.moduleTitle === manualInput.moduleTitle
+                );
 
-                    if (existingModuleIndex >= 0) {
-                        updatedDoc.modules[existingModuleIndex].lessons.push(newLesson);
-                    } else {
-                        updatedDoc.modules.push({
+                if (existingModuleIndex >= 0) {
+                    updatedDoc.modules[existingModuleIndex].lessons.push(newLesson);
+                } else {
+                    updatedDoc.modules.push({
                             moduleTitle: manualInput.moduleTitle || 'New Module',
-                            lessons: [newLesson]
-                        });
+                        lessons: [newLesson]
+                    });
                     }
                 }
                 setStructuredDoc(updatedDoc);
@@ -414,11 +414,11 @@ export default function DocumentStructurer() {
                             />
                         </div>
                         <div className="flex justify-between items-center">
-                            <button
-                                type="submit"
-                                disabled={loading}
+                        <button
+                            type="submit"
+                            disabled={loading}
                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                            >
+                        >
                                 {loading ? 'Processing...' : aiInput.isAddingToExisting ? 'Add Content' : 'Generate Structure'}
                             </button>
                             {aiInput.isAddingToExisting && (
@@ -432,7 +432,7 @@ export default function DocumentStructurer() {
                                     className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                                 >
                                     Cancel
-                                </button>
+                        </button>
                             )}
                         </div>
                     </form>
@@ -555,8 +555,8 @@ export default function DocumentStructurer() {
                             <div key={moduleIndex} className="border-l-4 border-blue-500 pl-4">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-2xl font-semibold text-gray-700">
-                                        {module.moduleTitle}
-                                    </h3>
+                                    {module.moduleTitle}
+                                </h3>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleAddAIToExisting(moduleIndex)}

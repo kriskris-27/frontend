@@ -138,13 +138,13 @@ const CourseView = ({ docId, onBack }: CourseViewProps) => {
                                     </svg>
                                 )}
                             </button>
-                            <button
-                                onClick={onBack}
+                <button
+                    onClick={onBack}
                                 className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
-                            >
+                >
                                 Back to Courses
-                            </button>
-                        </div>
+                </button>
+            </div>
                     </div>
                 </div>
             </nav>
@@ -217,13 +217,13 @@ const CourseView = ({ docId, onBack }: CourseViewProps) => {
                                     <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                                         {currentLesson.title}
                                     </h3>
-                                </div>
+            </div>
 
                                 <div className={`prose ${isDarkMode ? 'prose-invert' : ''} max-w-none`}>
                                     <div className={`whitespace-pre-wrap ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        {currentLesson.content}
+                        {currentLesson.content}
                                     </div>
-                                    {currentLesson.example && (
+                    {currentLesson.example && (
                                         <div className={`mt-6 p-4 rounded-lg ${
                                             isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
                                         }`}>
@@ -231,46 +231,46 @@ const CourseView = ({ docId, onBack }: CourseViewProps) => {
                                                 Example:
                                             </h4>
                                             <pre className={`whitespace-pre-wrap ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                                {currentLesson.example}
-                                            </pre>
-                                        </div>
-                                    )}
-                                </div>
+                                {currentLesson.example}
+                            </pre>
+                        </div>
+                    )}
+            </div>
 
                                 <div className="mt-8 flex justify-between items-center pt-4 border-t border-gray-200">
-                                    <button
-                                        onClick={handlePrevious}
-                                        disabled={isFirstLesson}
-                                        className={`px-6 py-2 rounded-lg ${
-                                            isFirstLesson
+                <button
+                    onClick={handlePrevious}
+                    disabled={isFirstLesson}
+                    className={`px-6 py-2 rounded-lg ${
+                        isFirstLesson
                                                 ? isDarkMode
                                                     ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                 : isDarkMode
                                                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                        }`}
-                                    >
-                                        Previous
-                                    </button>
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                >
+                    Previous
+                </button>
                                     <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                        Lesson {currentLessonIndex + 1} of {currentModule.lessons.length}
-                                    </div>
-                                    <button
-                                        onClick={handleNext}
-                                        disabled={isLastLesson}
-                                        className={`px-6 py-2 rounded-lg ${
-                                            isLastLesson
+                    Lesson {currentLessonIndex + 1} of {currentModule.lessons.length}
+                </div>
+                <button
+                    onClick={handleNext}
+                    disabled={isLastLesson}
+                    className={`px-6 py-2 rounded-lg ${
+                        isLastLesson
                                                 ? isDarkMode
                                                     ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                 : isDarkMode
                                                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                        }`}
-                                    >
-                                        Next
-                                    </button>
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                >
+                    Next
+                </button>
                                 </div>
                             </div>
                         </div>
@@ -351,52 +351,52 @@ export default function StudentDashboard() {
 
             <main className="pt-20 pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {loading ? (
+            {loading ? (
                         <div className={`flex justify-center items-center min-h-[400px] ${isDarkMode ? 'text-white' : 'text-gray-600'}`}>
                             <div className="text-xl">Loading courses...</div>
-                        </div>
-                    ) : error ? (
+                </div>
+            ) : error ? (
                         <div className={`p-4 ${isDarkMode ? 'bg-red-900 text-red-100' : 'bg-red-100 text-red-700'} rounded-lg`}>
-                            {error}
-                        </div>
-                    ) : courses.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {courses.map((course) => (
-                                <div
-                                    key={course._id}
-                                    onClick={() => handleCourseSelect(course._id)}
+                    {error}
+                </div>
+            ) : courses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {courses.map((course) => (
+                        <div
+                            key={course._id}
+                            onClick={() => handleCourseSelect(course._id)}
                                     className={`rounded-lg shadow-lg overflow-hidden transition-transform duration-200 hover:scale-105 cursor-pointer ${
                                         isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'
                                     }`}
-                                >
+                        >
                                     <div className="p-6">
                                         <h2 className={`text-xl font-semibold mb-3 ${
                                             isDarkMode ? 'text-white' : 'text-gray-800'
                                         }`}>
-                                            {course.courseTitle}
-                                        </h2>
+                                {course.courseTitle}
+                            </h2>
                                         <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                            <p>Created: {new Date(course.createdAt).toLocaleDateString()}</p>
-                                            <p>Last updated: {new Date(course.updatedAt).toLocaleDateString()}</p>
-                                        </div>
-                                        <button
+                                <p>Created: {new Date(course.createdAt).toLocaleDateString()}</p>
+                                <p>Last updated: {new Date(course.updatedAt).toLocaleDateString()}</p>
+                            </div>
+                            <button
                                             className={`mt-4 w-full px-4 py-2 rounded-lg transition-colors duration-200 ${
                                                 isDarkMode
                                                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
                                                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                                             }`}
-                                        >
-                                            Start Learning
-                                        </button>
+                            >
+                                Start Learning
+                            </button>
                                     </div>
-                                </div>
-                            ))}
                         </div>
-                    ) : (
+                    ))}
+                </div>
+            ) : (
                         <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            No courses available at the moment.
-                        </div>
-                    )}
+                    No courses available at the moment.
+                </div>
+            )}
                 </div>
             </main>
         </div>

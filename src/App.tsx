@@ -11,25 +11,25 @@ import StudentDashboard from './components/StudentDashboard';
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Routes>
+  {/* Public Routes */}
+  <Route path="/login" element={<Login />} />
+  <Route path="/signup" element={<Signup />} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
 
-        {/* Protected Routes */}
-        <Route element={<ProtectedRoute />}>
+  {/* Protected Routes */}
+  <Route element={<ProtectedRoute />}>
           {/* Main Dashboard */}
-          <Route path="/dashboard" element={<Dashboard />} />
+    <Route path="/dashboard" element={<Dashboard />} />
           
           {/* Student Routes */}
           <Route path="/sdash" element={<StudentDashboard />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/doc-struc" element={<DocumentStructurer />} />
-        </Route>
-      </Routes>
+    <Route path="/admin/doc-struc" element={<DocumentStructurer />} />
+  </Route>
+</Routes>
     </Router>
   );
 }
