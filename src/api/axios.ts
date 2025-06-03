@@ -3,16 +3,7 @@ import axios from 'axios';
 // Create axios instance with specific configuration for cross-origin requests
 const api = axios.create({
     baseURL: 'https://thesis-server-wwmb.onrender.com/api',
-    withCredentials: true, // Required for cookies
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    },
-    // Add these options for better cross-origin handling
-    xsrfCookieName: 'XSRF-TOKEN',
-    xsrfHeaderName: 'X-XSRF-TOKEN',
-    // Ensure credentials are included
-    withXSRFToken: true
+    withCredentials: true,
 });
 
 // Request interceptor
