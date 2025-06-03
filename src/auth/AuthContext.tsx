@@ -28,9 +28,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const refetchUser = async () => {
         setLoading(true);
         try {
+            console.log('Fetching user data, current cookies:', document.cookie);
             const res = await api.get<MeResponse>('/auth/me');
+            console.log('User data response:', {
+                status: res.status,
+                headers: res.headers,
+                cookies: document.cookie
+            });
             setUser(res.data.user);
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Error fetching user:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                headers: error.response?.headers,
+                cookies: document.cookie
+            });
             setUser(null);
             throw error;
         } finally {
