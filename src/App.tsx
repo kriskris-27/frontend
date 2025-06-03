@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './auth/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
-// import ProtectedRoute from './auth/ProtectedRoute';
+import ProtectedRoute from './auth/ProtectedRoute';
 import Signup from './auth/Signup';
 import OAuthSuccess from './auth/OAuthSuccess';
 import DocumentStructurer from './components/DocumentStructurer';
@@ -21,7 +21,7 @@ function App() {
           <Route path="/oauth-success" element={<OAuthSuccess />} />
 
           {/* Protected Routes */}
-          {/* <Route element={<ProtectedRoute />}> */}
+          <Route element={<ProtectedRoute />}>
             {/* Main Dashboard */}
             <Route path="/dashboard" element={<Dashboard />} />
             
@@ -31,7 +31,7 @@ function App() {
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/doc-struc" element={<DocumentStructurer />} />
-          {/* </Route> */}
+          </Route>
 
           {/* Catch all route - 404 */}
           <Route path="*" element={
