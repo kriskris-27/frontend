@@ -35,24 +35,15 @@ export default function Login() {
         });
 
         try {
-            // First, try to login with explicit credentials handling
-            const loginResponse = await api.post('/auth/login', 
-                { email, password },
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
-                }
-            );
+            // First, try to login
+            const loginResponse = await api.post('/auth/login', { email, password });
             
+            // Log login response details
             console.log('Login response:', {
                 status: loginResponse.status,
-                data: loginResponse.data,
                 headers: loginResponse.headers,
-                cookies: document.cookie,
-                setCookie: loginResponse.headers['set-cookie']
+                setCookie: loginResponse.headers['set-cookie'],
+                cookies: document.cookie
             });
 
             // Check if we got cookies
@@ -62,17 +53,12 @@ export default function Login() {
                 return;
             }
 
-            // Now try to get user data with explicit credentials
-            const userResponse = await api.get('/auth/me', {
-                withCredentials: true,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
+            // Now try to get user data
+            const userResponse = await api.get('/auth/me');
             
+            // Log user data response
             console.log('User data response:', {
                 status: userResponse.status,
-                data: userResponse.data,
                 headers: userResponse.headers,
                 cookies: document.cookie
             });
@@ -81,16 +67,15 @@ export default function Login() {
             await login(email, password);
             navigate('/dashboard');
         } catch (err: any) {
-            console.error('Login error details:', {
+            console.error('Login error:', {
                 status: err.response?.status,
                 data: err.response?.data,
                 headers: err.response?.headers,
+                setCookie: err.response?.headers?.['set-cookie'],
                 cookies: document.cookie,
-                isCorsError: err.message === 'Network Error' && !err.response,
-                setCookie: err.response?.headers?.['set-cookie']
+                isCorsError: err.message === 'Network Error'
             });
 
-            // More specific error messages
             if (err.message === 'Network Error') {
                 setLoginError('Network error. Please check your connection.');
             } else if (err.response?.status === 401) {
