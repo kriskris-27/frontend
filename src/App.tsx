@@ -21,7 +21,7 @@ function App() {
           <Route path="/oauth-success" element={<OAuthSuccess />} />
 
           {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
+          {/* <Route element={<ProtectedRoute />}> */}
             {/* Main Dashboard */}
             <Route path="/dashboard" element={<Dashboard />} />
             
@@ -31,7 +31,7 @@ function App() {
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/doc-struc" element={<DocumentStructurer />} />
-          </Route>
+          {/* </Route> */}
 
           {/* Catch all route - 404 */}
           <Route path="*" element={
