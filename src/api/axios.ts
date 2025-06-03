@@ -1,24 +1,38 @@
 import axios from 'axios';
 
+// Create axios instance with specific configuration for cross-origin requests
 const api = axios.create({
     baseURL: 'https://thesis-server-wwmb.onrender.com/api',
-    withCredentials: true,
+    withCredentials: true, // Required for cookies
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     },
+    // Add these options for better cross-origin handling
     xsrfCookieName: 'XSRF-TOKEN',
-    xsrfHeaderName: 'X-XSRF-TOKEN'
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    // Ensure credentials are included
+    withXSRFToken: true
 });
 
 // Request interceptor
 api.interceptors.request.use(
     (config) => {
+        // Ensure withCredentials is always true
+        config.withCredentials = true;
+        
+        // Log request details for debugging
         console.log('Making request to:', config.url, {
             withCredentials: config.withCredentials,
             headers: config.headers,
-            cookies: document.cookie
+            cookies: document.cookie,
+            sameSite: 'none', // This is what we expect from the server
+            secure: true // This is what we expect from the server
         });
+
+        // Add additional headers that might help with CORS
+        config.headers['Access-Control-Allow-Credentials'] = 'true';
+        
         return config;
     },
     (error) => {
@@ -30,24 +44,39 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
     (response) => {
+        // Log successful response details
         console.log('Response from:', response.config.url, {
             status: response.status,
             headers: response.headers,
-            cookies: document.cookie
+            cookies: document.cookie,
+            // Check Set-Cookie header if present
+            setCookie: response.headers['set-cookie']
         });
         return response;
     },
     (error) => {
+        // Log detailed error information
         console.error('Response error:', {
             url: error.config?.url,
             status: error.response?.status,
             data: error.response?.data,
             headers: error.response?.headers,
-            cookies: document.cookie
+            cookies: document.cookie,
+            // Check if it's a CORS error
+            isCorsError: error.message === 'Network Error' && !error.response,
+            // Check Set-Cookie header if present
+            setCookie: error.response?.headers?.['set-cookie']
         });
 
         if (error.response?.status === 401) {
+            // Check if it's a cookie issue
+            const hasCookies = document.cookie.length > 0;
+            console.log('Auth failed. Cookies present:', hasCookies);
+            
+            // Clear any local auth state
             localStorage.removeItem('user');
+            
+            // Only redirect if not already on login page
             if (!window.location.pathname.includes('/login')) {
                 window.location.href = '/login';
             }
@@ -55,5 +84,21 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+// Add a function to check cookie support
+const checkCookieSupport = () => {
+    const testCookie = 'testCookie=test; SameSite=None; Secure';
+    document.cookie = testCookie;
+    const hasCookie = document.cookie.includes('testCookie');
+    document.cookie = 'testCookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    return hasCookie;
+};
+
+// Log cookie support status
+console.log('Cookie support status:', {
+    cookiesEnabled: navigator.cookieEnabled,
+    canSetCookies: checkCookieSupport(),
+    currentCookies: document.cookie
+});
 
 export default api;
