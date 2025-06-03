@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: process.env.NODE_ENV === 'production' 
+    baseURL: import.meta.env.PROD 
         ? 'https://thesis-server-wwmb.onrender.com/api'
         : 'http://localhost:5000/api',
     withCredentials: true
