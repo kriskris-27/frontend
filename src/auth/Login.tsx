@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Component from "./Headname"
 import { useAuth } from "./AuthContext"
 import { useNavigate } from 'react-router-dom';
@@ -12,27 +12,71 @@ export default function Login() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
+    // Check cookie support on component mount
+    useEffect(() => {
+        const checkCookies = () => {
+            console.log('Initial cookie check:', {
+                cookiesEnabled: navigator.cookieEnabled,
+                currentCookies: document.cookie,
+                domain: window.location.hostname
+            });
+        };
+        checkCookies();
+    }, []);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoginError(null)
+        
+        // Log pre-login state
+        console.log('Pre-login state:', {
+            cookies: document.cookie,
+            domain: window.location.hostname
+        });
+
         try {
-            // First, try to login
-            const loginResponse = await api.post('/auth/login', { email, password }, {
-                withCredentials: true // Explicitly set this
+            // First, try to login with explicit credentials handling
+            const loginResponse = await api.post('/auth/login', 
+                { email, password },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                }
+            );
+            
+            console.log('Login response:', {
+                status: loginResponse.status,
+                data: loginResponse.data,
+                headers: loginResponse.headers,
+                cookies: document.cookie,
+                setCookie: loginResponse.headers['set-cookie']
             });
-            
-            console.log('Login response:', loginResponse.data);
-            
+
             // Check if we got cookies
-            console.log('Cookies after login:', document.cookie);
-            
-            // Now try to get user data
+            if (!document.cookie) {
+                console.warn('No cookies set after login');
+                setLoginError('Authentication failed: No session cookie received');
+                return;
+            }
+
+            // Now try to get user data with explicit credentials
             const userResponse = await api.get('/auth/me', {
-                withCredentials: true // Explicitly set this
+                withCredentials: true,
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
             
-            console.log('User data response:', userResponse.data);
-            
+            console.log('User data response:', {
+                status: userResponse.status,
+                data: userResponse.data,
+                headers: userResponse.headers,
+                cookies: document.cookie
+            });
+
             // If we got here, both requests succeeded
             await login(email, password);
             navigate('/dashboard');
@@ -41,9 +85,21 @@ export default function Login() {
                 status: err.response?.status,
                 data: err.response?.data,
                 headers: err.response?.headers,
-                cookies: document.cookie
+                cookies: document.cookie,
+                isCorsError: err.message === 'Network Error' && !err.response,
+                setCookie: err.response?.headers?.['set-cookie']
             });
-            setLoginError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+
+            // More specific error messages
+            if (err.message === 'Network Error') {
+                setLoginError('Network error. Please check your connection.');
+            } else if (err.response?.status === 401) {
+                setLoginError('Invalid credentials. Please try again.');
+            } else if (!document.cookie) {
+                setLoginError('Authentication failed: No session cookie received. Please try again.');
+            } else {
+                setLoginError(err.response?.data?.message || 'Login failed. Please try again.');
+            }
         }
     }
 
