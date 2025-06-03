@@ -13,7 +13,7 @@ function App() {
     <Router>
         <Routes>
   {/* Public Routes */}
-  <Route path="/login" element={<Login />} />
+  <Route path="/" element={<Login />} />
   <Route path="/signup" element={<Signup />} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
 
